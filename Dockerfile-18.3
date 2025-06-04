@@ -121,8 +121,11 @@ RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/
     -p https://github.com/zsh-users/zsh-autosuggestions \
     -p https://github.com/zsh-users/zsh-completions
 
+#Create enterprise addons directory
+RUN mkdir -p /odoo/src/enterprise
+
 # Set up addons path
-ENV ADDONS_PATH=/odoo/src/odoo/addons,/odoo/src/odoo/odoo/addons,/odoo/src/design-themes
+ENV ADDONS_PATH=/odoo/src/odoo/addons,/odoo/src/odoo/odoo/addons,/odoo/src/design-themes,/odoo/src/extra_addons,/odoo/src/enterprise
 
 # Install requirements from addons if they exist
 RUN IFS=','; \
