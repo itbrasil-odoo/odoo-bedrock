@@ -1,0 +1,51 @@
+services:
+  odoo18template:
+    build:
+      context: .
+      dockerfile: Dockerfile-18.0
+    image: odoo18template:latest
+    container_name: odoo18template
+  db:
+    image: postgres:latest
+    container_name: odoo18db
+    environment:
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo
+      POSTGRES_DB: odoo
+    volumes:
+      - odoo_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "odoo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  odoo18-3:
+    build:
+      context: .
+      dockerfile: Dockerfile-18.3
+    image: odoo18-3:latest
+    container_name: odoo18-3
+    depends_on:
+      db:
+        condition: service_healthy
+      odoo18template:
+        condition: service_started
+    ports:
+      - "8069:8069"
+      - "8072:8072"
+    volumes:
+      - odoo_data_dir:/data/odoo
+      - odoo_root_dir:/root
+    environment:
+      - DB_HOST=db
+      - DB_USER=odoo
+      - DB_PASSWORD=odoo
+      - DB_NAME=18-3_test
+      - ADMIN_PASSWD=Admin@
+      - LIST_DB=True
+      - LIMIT_TIME_CPU=1200
+      - LIMIT_TIME_REAL=1200
+volumes:
+  odoo_db_data:
+  odoo_data_dir:
+  odoo_root_dir:

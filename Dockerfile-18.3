@@ -1,0 +1,80 @@
+ARG odoo_version=saas-18.3
+
+###########################################################################
+# build stage, install Odoo
+
+FROM odoo18template:latest AS build
+
+ARG odoo_version
+
+# Install build dependencies
+RUN apt -yq update \
+&& apt -yq install --no-install-recommends \
+   curl \
+   libpq-dev \
+   libldap2-dev \
+   libsasl2-dev \
+   build-essential \
+   python3.12-dev \
+   libffi-dev \
+   libcairo2-dev \
+   libcairo2 \
+   pkg-config \
+&& rm -rf /var/lib/apt/lists/* 
+
+#RUN pip3 install --upgrade wheel setuptools pip pycairo openpyxl gevent psutil psycopg2-binary python-ldap reportlab
+
+ADD https://raw.githubusercontent.com/odoo/odoo/${odoo_version}/requirements.txt /odoo/src/odoo/requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r /odoo/src/odoo/requirements.txt
+
+ADD https://api.github.com/repos/odoo/odoo/git/refs/heads/${odoo_version} /tmp/odoo_version.json
+RUN curl -sSL https://github.com/odoo/odoo/tarball/${odoo_version} | tar -C /odoo/src/odoo --strip-components=1 -xz
+# Patch setup.py to use a valid version number and install without editable mode
+RUN sed -i 's/version=version/version="18.3.0"/' /odoo/src/odoo/setup.py
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install /odoo/src/odoo
+
+RUN mkdir -p /odoo/src/design-themes /odoo/src/extra_addons
+RUN curl -sSL https://github.com/odoo/design-themes/tarball/${odoo_version} | tar -C /odoo/src/design-themes --strip-components=1 -xz
+
+###########################################################################
+# runtime stage
+FROM odoo18template:latest
+
+ARG odoo_version
+
+# Install runtime system dependencies
+RUN apt -yq update \
+&& apt -yq install \
+   postgresql-client git wget \
+&& rm -rf /var/lib/apt/lists/*
+
+# Copy venv from build stage to runtime stage
+COPY --from=build /odoo /odoo
+
+# Uses "Spaceship" theme with some customization. Uses some bundled plugins and installs some more from github
+RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/v1.2.1/zsh-in-docker.sh)" -- \
+    -t https://github.com/denysdovhan/spaceship-prompt \
+    -a 'SPACESHIP_PROMPT_ADD_NEWLINE="false"' \
+    -a 'SPACESHIP_PROMPT_SEPARATE_LINE="false"' \
+    -p git \
+    -p python \
+    -p pip \
+    -p https://github.com/zsh-users/zsh-syntax-highlighting \
+    -p https://github.com/zsh-users/zsh-history-substring-search \
+    -p https://github.com/zsh-users/zsh-autosuggestions \
+    -p https://github.com/zsh-users/zsh-completions
+
+ENV ADDONS_PATH=/odoo/src/odoo/addons,/odoo/src/odoo/odoo/addons,/odoo/src/design-themes
+
+RUN IFS=','; \
+    for dir in $ADDONS_PATH; do \
+        if [ -f "$dir/requirements.txt" ]; then \
+            echo "Instalando dependências de $dir/requirements.txt"; \
+            pip3 install -r "$dir/requirements.txt"; \
+        fi; \
+    done
+
+RUN pip3 install -r /odoo/src/odoo/requirements.txt
+RUN pip3 install --upgrade pip phonenumbers
