@@ -1,9 +1,60 @@
 ARG odoo_version=saas-18.3
+ARG DISTRO=noble
+ARG PYTHONBIN=python3.12
 
 ###########################################################################
-# build stage, install Odoo
+# Base stage - based on Dockerfile-18.0
+FROM docker.io/ubuntu:$DISTRO AS base
 
-FROM odoo18template:latest AS build
+LABEL org.opencontainers.image.authors="ACSONE SA/NV"
+
+ARG DISTRO
+ARG PYTHONBIN
+
+ENV \
+  ODOO_VERSION=18.3 \
+  ODOO_BIN=odoo \
+  LANG=C.UTF-8 \
+  LC_ALL=C.UTF-8 \
+  DEBIAN_FRONTEND=noninteractive \
+  KWKHTMLTOPDF_SERVER_URL=http://kwkhtmltopdf
+
+ADD https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu/dists/$DISTRO/Release /tmp/
+RUN --mount=type=bind,source=./install,target=/tmp/install \
+  set -x \
+  && /tmp/install/pre-install.sh \
+  && /tmp/install/tools.sh \
+  && /tmp/install/gosu.sh \
+  && /tmp/install/python3.sh \
+  && /tmp/install/wkhtmltopdf.sh \
+  && /tmp/install/pgdg.sh \
+  && /tmp/install/post-install-clean.sh
+
+# isolate from system python libraries
+RUN set -x \
+  && $PYTHONBIN -m venv /odoo \
+  && /odoo/bin/pip install --no-cache-dir -U pip
+ENV PATH=/odoo/bin:$PATH
+ENV VIRTUAL_ENV=/odoo
+
+# odoo config file
+COPY ./templates/18.3 /odoo/templates
+ENV OPENERP_SERVER=/etc/odoo.cfg
+ENV ODOO_RC=/etc/odoo.cfg
+
+# odoo data dir (filestore, etc)
+RUN mkdir -p /data/odoo
+VOLUME ["/data/odoo"]
+
+EXPOSE 8069 8072
+
+# root banner
+COPY ./root-banner /etc
+RUN echo "cat /etc/root-banner" >> /root/.bashrc
+
+###########################################################################
+# Build stage - install Odoo 18.3
+FROM base AS build
 
 ARG odoo_version
 
@@ -22,25 +73,29 @@ RUN apt -yq update \
    pkg-config \
 && rm -rf /var/lib/apt/lists/* 
 
-#RUN pip3 install --upgrade wheel setuptools pip pycairo openpyxl gevent psutil psycopg2-binary python-ldap reportlab
+# Create directories for Odoo source
+RUN mkdir -p /odoo/src/odoo /odoo/src/design-themes /odoo/src/extra_addons
 
+# Download and install Odoo requirements
 ADD https://raw.githubusercontent.com/odoo/odoo/${odoo_version}/requirements.txt /odoo/src/odoo/requirements.txt
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install -r /odoo/src/odoo/requirements.txt
 
+# Download and install Odoo source
 ADD https://api.github.com/repos/odoo/odoo/git/refs/heads/${odoo_version} /tmp/odoo_version.json
 RUN curl -sSL https://github.com/odoo/odoo/tarball/${odoo_version} | tar -C /odoo/src/odoo --strip-components=1 -xz
+
 # Patch setup.py to use a valid version number and install without editable mode
 RUN sed -i 's/version=version/version="18.3.0"/' /odoo/src/odoo/setup.py
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install /odoo/src/odoo
 
-RUN mkdir -p /odoo/src/design-themes /odoo/src/extra_addons
+# Download design themes
 RUN curl -sSL https://github.com/odoo/design-themes/tarball/${odoo_version} | tar -C /odoo/src/design-themes --strip-components=1 -xz
 
 ###########################################################################
-# runtime stage
-FROM odoo18template:latest
+# Runtime stage - final image
+FROM base AS runtime
 
 ARG odoo_version
 
@@ -50,7 +105,7 @@ RUN apt -yq update \
    postgresql-client git wget \
 && rm -rf /var/lib/apt/lists/*
 
-# Copy venv from build stage to runtime stage
+# Copy built Odoo from build stage
 COPY --from=build /odoo /odoo
 
 # Uses "Spaceship" theme with some customization. Uses some bundled plugins and installs some more from github
@@ -66,8 +121,10 @@ RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/
     -p https://github.com/zsh-users/zsh-autosuggestions \
     -p https://github.com/zsh-users/zsh-completions
 
+# Set up addons path
 ENV ADDONS_PATH=/odoo/src/odoo/addons,/odoo/src/odoo/odoo/addons,/odoo/src/design-themes
 
+# Install requirements from addons if they exist
 RUN IFS=','; \
     for dir in $ADDONS_PATH; do \
         if [ -f "$dir/requirements.txt" ]; then \
@@ -76,5 +133,13 @@ RUN IFS=','; \
         fi; \
     done
 
+# Install additional packages
 RUN pip3 install -r /odoo/src/odoo/requirements.txt
 RUN pip3 install --upgrade pip phonenumbers
+
+# Copy entrypoint and startup scripts from base template
+COPY ./start-entrypoint.d /odoo/start-entrypoint.d
+COPY ./bin/entrypoint.sh /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["odoo"]
