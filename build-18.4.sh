@@ -1,15 +1,15 @@
 #!/bin/bash
 
-# Script para build da imagem Odoo 18.3 standalone
+# Script para build da imagem Odoo 18.4 standalone
 # Este script não depende do docker-compose
 
 set -e
 
-IMAGE_NAME="odoo:18.3"
-DOCKERFILE="Dockerfile-18.3"
+IMAGE_NAME="odoo:18.4"
+DOCKERFILE="Dockerfile-18.4"
 CONTEXT_DIR="."
 
-echo "🔨 Construindo imagem Docker para Odoo 18.3..."
+echo "🔨 Construindo imagem Docker para Odoo 18.4..."
 echo "📁 Contexto: $CONTEXT_DIR"
 echo "📄 Dockerfile: $DOCKERFILE"
 echo "🏷️  Imagem: $IMAGE_NAME"
@@ -19,7 +19,7 @@ echo ""
 docker build \
     --file "$DOCKERFILE" \
     --tag "$IMAGE_NAME" \
-    --build-arg odoo_version=saas-18.3 \
+    --build-arg odoo_version=saas-18.4 \
     --build-arg DISTRO=noble \
     --build-arg PYTHONBIN=python3.12 \
     "$CONTEXT_DIR"

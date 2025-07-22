@@ -1,6 +1,6 @@
-# Odoo 18.3 Standalone Docker
+# Odoo 18.4 Standalone Docker
 
-Este Dockerfile permite executar o Odoo 18.3 sem depender do docker-compose, integrando diretamente a base do Dockerfile-18.0.
+Este Dockerfile permite executar o Odoo 18.4 sem depender do docker-compose, integrando diretamente a base do Dockerfile-18.0.
 
 ## 🚀 Build e Execução
 
@@ -8,11 +8,11 @@ Este Dockerfile permite executar o Odoo 18.3 sem depender do docker-compose, int
 
 ```bash
 # Executar o script de build
-./build-18.3.sh
+./build-18.4.sh
 
 # Ou fazer build manual
-docker build -f Dockerfile-18.3 -t odoo:18.3 \
-  --build-arg odoo_version=saas-18.3 \
+docker build -f Dockerfile-18.4 -t odoo:18.4 \
+  --build-arg odoo_version=saas-18.4 \
   --build-arg DISTRO=noble \
   --build-arg PYTHONBIN=python3.12 \
   .
@@ -22,7 +22,7 @@ docker build -f Dockerfile-18.3 -t odoo:18.3 \
 
 ```bash
 # Apenas Odoo (sem banco)
-docker run -p 8069:8069 odoo:18.3
+docker run -p 8069:8069 odoo:18.4
 
 # Com PostgreSQL externo
 docker run -p 8069:8069 \
@@ -30,14 +30,14 @@ docker run -p 8069:8069 \
   -e DB_PORT=5432 \
   -e DB_USER=odoo \
   -e DB_PASSWORD=sua-senha \
-  odoo:18.3
+  odoo:18.4
 ```
 
 ### Com Docker Compose (Desenvolvimento Local)
 
 ```bash
-# Usar o compose específico do 18.3
-docker-compose -f docker-compose-18.3.yml up -d
+# Usar o compose específico do 18.4
+docker-compose -f docker-compose-18.4.yml up -d
 ```
 
 ## 🔧 Configurações
@@ -62,10 +62,10 @@ docker-compose -f docker-compose-18.3.yml up -d
 
 ## 📂 Estrutura
 
-O Dockerfile-18.3 agora possui três estágios:
+O Dockerfile-18.4 agora possui três estágios:
 
 1. **Base**: Configuração base do Ubuntu com Python e dependências
-2. **Build**: Download e compilação do Odoo 18.3
+2. **Build**: Download e compilação do Odoo 18.4
 3. **Runtime**: Imagem final otimizada para execução
 
 ## ✨ Características

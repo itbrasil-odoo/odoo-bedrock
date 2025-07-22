@@ -1,12 +1,12 @@
 version: '3.8'
 
 services:
-  odoo18-3:
+  odoo18-4:
     build:
       context: .
-      dockerfile: Dockerfile-18.3
+      dockerfile: Dockerfile-18.4
       args:
-        odoo_version: saas-18.3
+        odoo_version: saas-18.4
         DISTRO: noble
         PYTHONBIN: python3.12
     ports:

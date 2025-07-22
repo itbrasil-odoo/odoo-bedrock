@@ -111,7 +111,7 @@ jobs:
             PYTHONTAG: py312
             PYTHONBIN: python3.12
             DISTRO: noble
-          - ODOOVERSION: "18.3"
+          - ODOOVERSION: "18.4"
             PYTHONTAG: py312
             PYTHONBIN: python3.12
             DISTRO: noble

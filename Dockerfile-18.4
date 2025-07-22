@@ -1,4 +1,4 @@
-ARG odoo_version=saas-18.3
+ARG odoo_version=saas-18.4
 ARG DISTRO=noble
 ARG PYTHONBIN=python3.12
 
@@ -12,7 +12,7 @@ ARG DISTRO
 ARG PYTHONBIN
 
 ENV \
-  ODOO_VERSION=18.3 \
+  ODOO_VERSION=18.4 \
   ODOO_BIN=odoo \
   LANG=C.UTF-8 \
   LC_ALL=C.UTF-8 \
@@ -38,7 +38,7 @@ ENV PATH=/odoo/bin:$PATH
 ENV VIRTUAL_ENV=/odoo
 
 # odoo config file
-COPY ./templates/18.3 /odoo/templates
+COPY ./templates/18.4 /odoo/templates
 ENV OPENERP_SERVER=/etc/odoo.cfg
 ENV ODOO_RC=/etc/odoo.cfg
 
@@ -53,7 +53,7 @@ COPY ./root-banner /etc
 RUN echo "cat /etc/root-banner" >> /root/.bashrc
 
 ###########################################################################
-# Build stage - install Odoo 18.3
+# Build stage - install Odoo 18.4
 FROM base AS build
 
 ARG odoo_version
@@ -86,7 +86,7 @@ ADD https://api.github.com/repos/odoo/odoo/git/refs/heads/${odoo_version} /tmp/o
 RUN curl -sSL https://github.com/odoo/odoo/tarball/${odoo_version} | tar -C /odoo/src/odoo --strip-components=1 -xz
 
 # Patch setup.py to use a valid version number and install without editable mode
-RUN sed -i 's/version=version/version="18.3.0"/' /odoo/src/odoo/setup.py
+RUN sed -i 's/version=version/version="18.4.0"/' /odoo/src/odoo/setup.py
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install /odoo/src/odoo
 

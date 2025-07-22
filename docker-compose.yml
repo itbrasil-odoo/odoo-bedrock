@@ -19,12 +19,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-  odoo18-3:
+  odoo18-4:
     build:
       context: .
-      dockerfile: Dockerfile-18.3
-    image: odoo18-3:latest
-    container_name: odoo18-3
+      dockerfile: Dockerfile-18.4
+    image: odoo18-4:latest
+    container_name: odoo18-4
     depends_on:
       db:
         condition: service_healthy
@@ -40,7 +40,7 @@ services:
       - DB_HOST=db
       - DB_USER=odoo
       - DB_PASSWORD=odoo
-      - DB_NAME=18-3_test
+      - DB_NAME=18-4_test
       - ADMIN_PASSWD=Admin@
       - LIST_DB=True
       - LIMIT_TIME_CPU=1200
