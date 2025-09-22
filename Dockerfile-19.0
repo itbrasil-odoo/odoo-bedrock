@@ -25,6 +25,8 @@ RUN --mount=type=bind,source=./install,target=/tmp/install \
   && /tmp/install/python3.sh \
   && /tmp/install/wkhtmltopdf.sh \
   && /tmp/install/pgdg.sh \
+  && apt-get update \
+  && apt-get install -y --no-install-recommends postgresql-client \
   && /tmp/install/post-install-clean.sh
 
 # isolate from system python libraries
