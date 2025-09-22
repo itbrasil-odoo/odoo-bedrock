@@ -145,8 +145,10 @@ def test_odoo_cfg_env_vars():
         "LIMIT_TIME_CPU",
         "LIMIT_TIME_REAL",
         "LIMIT_TIME_REAL_CRON",
+        "LIMIT_TIME_WORKER_CRON",
         "LIST_DB",
         "LOG_DB",
+        "LOG_DB_LEVEL",
         "LOG_HANDLER",
         "LOG_LEVEL",
         "LOGFILE",
@@ -154,8 +156,7 @@ def test_odoo_cfg_env_vars():
         "RUNNING_ENV",
         "SERVER_WIDE_MODULES",
         "SYSLOG",
-        "UNACCENT",
-        "WITHOUT_DEMO",
+        "WITH_DEMO",
         "WORKERS",
     }
     env = {}
