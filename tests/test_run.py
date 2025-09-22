@@ -153,7 +153,6 @@ def test_odoo_cfg_env_vars():
         "LOG_LEVEL",
         "LOGFILE",
         "MAX_CRON_THREADS",
-        "RUNNING_ENV",
         "SERVER_WIDE_MODULES",
         "SYSLOG",
         "WITH_DEMO",
